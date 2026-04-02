@@ -20,7 +20,7 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_classes": ["AppContainer"]
+      "new_sqlite_classes": ["AppContainer"]
     }
   ]
 }
