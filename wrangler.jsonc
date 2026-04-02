@@ -1,0 +1,26 @@
+{
+  "name": "sandbox-js",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-01-01",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "CONTAINER",
+        "class_name": "AppContainer"
+      }
+    ]
+  },
+  "containers": [
+    {
+      "class_name": "AppContainer",
+      "image": "./Dockerfile",
+      "max_instances": 1
+    }
+  ],
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["AppContainer"]
+    }
+  ]
+}

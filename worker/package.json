@@ -1,0 +1,7 @@
+{
+  "name": "sandbox-js-worker",
+  "private": true,
+  "dependencies": {
+    "@cloudflare/containers": "latest"
+  }
+}
