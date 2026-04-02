@@ -1,11 +1,23 @@
-app = "sandbox-js-neenhouse"
-primary_region = "sjc"
+# fly.toml app configuration file generated for sandbox-js-zsjeva on 2026-04-02T05:32:51Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-[http_service]
-  internal_port = 8000
-  force_https = true
-  auto_stop_machines = "stop"
-  auto_start_machines = true
-  min_machines_running = 0
+app = 'sandbox-js-zsjeva'
+primary_region = 'ams'
 
 [build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256
