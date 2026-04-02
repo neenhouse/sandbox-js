@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SandboxJS — Secure Deno Playground</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2306b6d4' stroke-width='2'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/><path d='M9 12l2 2 4-4' stroke='%2306b6d4'/></svg>" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09090b;
+      --surface: #18181b;
+      --surface-2: #1c1c1f;
+      --border: #27272a;
+      --border-2: #3f3f46;
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      --accent: #06b6d4;
+      --accent-dim: #0e7490;
+      --accent-glow: rgba(6, 182, 212, 0.15);
+      --red: #ef4444;
+      --red-dim: rgba(239, 68, 68, 0.15);
+      --green: #22c55e;
+      --green-dim: rgba(34, 197, 94, 0.12);
+      --amber: #f59e0b;
+      --font-ui: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── Header ─── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(9,9,11,0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .logo svg { color: var(--accent); flex-shrink: 0; }
+
+    .logo-badge {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 100px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      margin-left: 4px;
+      font-family: var(--font-mono);
+    }
+
+    .header-right {
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    /* ─── Permission Bar ─── */
+    .permission-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(24,24,27,0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .permission-bar-label {
+      font-size: 11px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+      margin-right: 4px;
+      white-space: nowrap;
+    }
+
+    .permission-toggles {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .perm-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px 5px 8px;
+      border-radius: 100px;
+      border: 1px solid var(--border-2);
+      background: var(--surface);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .perm-toggle:hover { border-color: var(--border-2); background: var(--surface-2); }
+
+    .perm-toggle.active {
+      border-color: rgba(34,197,94,0.4);
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    .toggle-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border-2);
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .perm-toggle.active .toggle-dot { background: var(--green); }
+
+    /* ─── Main Split Pane ─── */
+    .main {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      height: calc(100vh - 200px);
+    }
+
+    .editor-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      min-width: 0;
+    }
+
+    .pane-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .pane-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+    }
+
+    .run-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 16px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .run-btn:hover { background: #22d3ee; transform: translateY(-1px); }
+    .run-btn:active { transform: translateY(0); }
+    .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .run-btn svg { flex-shrink: 0; }
+
+    /* ─── Code Editor (Textarea) ─── */
+    .editor-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #code-editor {
+      width: 100%;
+      height: 100%;
+      background: #0d0d10;
+      color: #e2e8f0;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.65;
+      border: none;
+      outline: none;
+      resize: none;
+      padding: 16px;
+      tab-size: 2;
+      white-space: pre;
+      overflow-wrap: normal;
+      overflow-x: auto;
+      caret-color: var(--accent);
+    }
+
+    /* ─── Output Pane ─── */
+    .output-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .output-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .output-tab {
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-dim);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .output-tab:hover { color: var(--text-muted); }
+
+    .output-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-badge {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 100px;
+      background: var(--red-dim);
+      color: var(--red);
+      font-weight: 600;
+      display: none;
+    }
+
+    .tab-badge.visible { display: inline; }
+
+    .output-content {
+      flex: 1;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .output-panel {
+      display: none;
+      height: 100%;
+      padding: 16px;
+    }
+
+    .output-panel.active { display: block; }
+
+    .output-text {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .output-text.stdout { color: var(--text); }
+    .output-text.stderr { color: var(--red); }
+
+    .output-empty {
+      color: var(--text-dim);
+      font-size: 13px;
+      font-style: italic;
+      padding: 8px 0;
+    }
+
+    .output-footer {
+      padding: 6px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-dim);
+      background: var(--surface);
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .exec-time { color: var(--accent); }
+
+    /* ─── Security Violations ─── */
+    .violation-item {
+      padding: 12px;
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: var(--radius);
+      background: var(--red-dim);
+      margin-bottom: 8px;
+    }
+
+    .violation-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--red);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-family: var(--font-mono);
+    }
+
+    .violation-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding-left: 22px;
+    }
+
+    .violation-hint strong { color: var(--amber); }
+
+    .security-ok {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      font-size: 13px;
+      padding: 12px;
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: var(--radius);
+      background: var(--green-dim);
+    }
+
+    /* ─── Challenge Section ─── */
+    .challenge-section {
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .challenge-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+
+    .challenge-grid {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .challenge-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+      padding: 8px 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: left;
+      font-family: var(--font-ui);
+    }
+
+    .challenge-btn:hover {
+      border-color: var(--accent-dim);
+      background: var(--accent-glow);
+    }
+
+    .challenge-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .challenge-perm {
+      font-size: 10px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    /* ─── Loading spinner ─── */
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(0,0,0,0.3);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+      SandboxJS
+      <span class="logo-badge">Deno 2.x</span>
+    </div>
+    <div class="header-right">Secure code playground with per-execution permission controls</div>
+  </header>
+
+  <!-- Permission Bar -->
+  <div class="permission-bar">
+    <span class="permission-bar-label">Permissions</span>
+    <div class="permission-toggles" id="permission-toggles">
+      <div class="perm-toggle" data-perm="net" onclick="togglePermission(this)">
+        <span class="toggle-dot"></span> Network
+      </div>
+      <div class="perm-toggle" data-perm="read" onclick="togglePermission(this)">
+        <span class="toggle-dot"></span> File Read
+      </div>
+      <div class="perm-toggle" data-perm="write" onclick="togglePermission(this)">
+        <span class="toggle-dot"></span> File Write
+      </div>
+      <div class="perm-toggle" data-perm="env" onclick="togglePermission(this)">
+        <span class="toggle-dot"></span> Environment
+      </div>
+      <div class="perm-toggle" data-perm="run" onclick="togglePermission(this)">
+        <span class="toggle-dot"></span> Subprocess
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Split Pane -->
+  <div class="main">
+
+    <!-- Editor Pane -->
+    <div class="editor-pane">
+      <div class="pane-header">
+        <span class="pane-title">TypeScript / JavaScript</span>
+        <button class="run-btn" id="run-btn" onclick="runCode()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5,3 19,12 5,21"/>
+          </svg>
+          Run
+        </button>
+      </div>
+      <div class="editor-wrapper">
+        <textarea id="code-editor" spellcheck="false" autocorrect="off" autocapitalize="off">console.log("Hello from the sandbox!")</textarea>
+      </div>
+    </div>
+
+    <!-- Output Pane -->
+    <div class="output-pane">
+      <div class="output-tabs">
+        <div class="output-tab active" data-tab="stdout" onclick="switchTab(this)">Output</div>
+        <div class="output-tab" data-tab="stderr" onclick="switchTab(this)">
+          Errors
+          <span class="tab-badge" id="badge-errors">!</span>
+        </div>
+        <div class="output-tab" data-tab="security" onclick="switchTab(this)">
+          Security
+          <span class="tab-badge" id="badge-security">!</span>
+        </div>
+      </div>
+      <div class="output-content">
+        <div class="output-panel active" id="panel-stdout">
+          <div class="output-empty">Run your code to see output here.</div>
+        </div>
+        <div class="output-panel" id="panel-stderr">
+          <div class="output-empty">No errors.</div>
+        </div>
+        <div class="output-panel" id="panel-security">
+          <div class="security-ok">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            No permission violations detected.
+          </div>
+        </div>
+      </div>
+      <div class="output-footer">
+        <span id="exec-status">Ready</span>
+        <span class="exec-time" id="exec-time" style="display:none"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Challenge Section -->
+  <div class="challenge-section">
+    <div class="challenge-title">Try to Break Out — Load a challenge snippet</div>
+    <div class="challenge-grid">
+      <button class="challenge-btn" onclick="loadChallenge('net')">
+        <span class="challenge-name">🌐 Fetch URL</span>
+        <span class="challenge-perm">needs: Network</span>
+      </button>
+      <button class="challenge-btn" onclick="loadChallenge('read')">
+        <span class="challenge-name">📄 Read File</span>
+        <span class="challenge-perm">needs: File Read</span>
+      </button>
+      <button class="challenge-btn" onclick="loadChallenge('env')">
+        <span class="challenge-name">🔑 Env Vars</span>
+        <span class="challenge-perm">needs: Environment</span>
+      </button>
+      <button class="challenge-btn" onclick="loadChallenge('run')">
+        <span class="challenge-name">⚙️ Run Command</span>
+        <span class="challenge-perm">needs: Subprocess</span>
+      </button>
+      <button class="challenge-btn" onclick="loadChallenge('write')">
+        <span class="challenge-name">💾 Write File</span>
+        <span class="challenge-perm">needs: File Write</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ─── State ───
+    const permissions = { net: false, read: false, write: false, env: false, run: false };
+
+    const challenges = {
+      net: `await fetch('https://httpbin.org/get').then(r => r.text()).then(console.log)`,
+      read: `const text = await Deno.readTextFile('/etc/hostname');\nconsole.log(text)`,
+      env: `console.log(Deno.env.get('HOME'))`,
+      run: `const cmd = new Deno.Command('whoami');\nconst out = await cmd.output();\nconsole.log(new TextDecoder().decode(out.stdout))`,
+      write: `await Deno.writeTextFile('/tmp/sandbox-test.txt', 'gotcha!');\nconsole.log('File written!')`,
+    };
+
+    const permissionHints = {
+      net: { flag: '--allow-net', label: 'Network' },
+      read: { flag: '--allow-read', label: 'File Read' },
+      write: { flag: '--allow-write', label: 'File Write' },
+      env: { flag: '--allow-env', label: 'Environment' },
+      run: { flag: '--allow-run', label: 'Subprocess' },
+    };
+
+    // ─── Permission Toggles ───
+    function togglePermission(el) {
+      const perm = el.dataset.perm;
+      permissions[perm] = !permissions[perm];
+      el.classList.toggle('active', permissions[perm]);
+    }
+
+    // ─── Tab Switching ───
+    function switchTab(tabEl) {
+      document.querySelectorAll('.output-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.output-panel').forEach(p => p.classList.remove('active'));
+      tabEl.classList.add('active');
+      document.getElementById('panel-' + tabEl.dataset.tab).classList.add('active');
+    }
+
+    // ─── Load Challenge ───
+    function loadChallenge(key) {
+      document.getElementById('code-editor').value = challenges[key];
+    }
+
+    // ─── Tab key in textarea ───
+    document.getElementById('code-editor').addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = e.target.selectionStart;
+        const end = e.target.selectionEnd;
+        e.target.value = e.target.value.slice(0, start) + '  ' + e.target.value.slice(end);
+        e.target.selectionStart = e.target.selectionEnd = start + 2;
+      }
+      // Ctrl/Cmd+Enter to run
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        runCode();
+      }
+    });
+
+    // ─── Parse permission violations from stderr ───
+    function extractPermFromViolation(msg) {
+      if (msg.includes('net') || msg.includes('network') || msg.includes('Network')) return 'net';
+      if (msg.includes('read') || msg.includes('Read')) return 'read';
+      if (msg.includes('write') || msg.includes('Write')) return 'write';
+      if (msg.includes('env') || msg.includes('Env') || msg.includes('environment')) return 'env';
+      if (msg.includes('run') || msg.includes('Run') || msg.includes('subprocess')) return 'run';
+      return null;
+    }
+
+    // ─── Run Code ───
+    async function runCode() {
+      const code = document.getElementById('code-editor').value;
+      const btn = document.getElementById('run-btn');
+      const statusEl = document.getElementById('exec-status');
+      const timeEl = document.getElementById('exec-time');
+
+      // Reset UI
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Running…';
+      statusEl.textContent = 'Running…';
+      timeEl.style.display = 'none';
+
+      // Clear badges
+      document.getElementById('badge-errors').classList.remove('visible');
+      document.getElementById('badge-security').classList.remove('visible');
+
+      try {
+        const res = await fetch('/api/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, permissions }),
+        });
+
+        const result = await res.json();
+
+        // ─── Stdout Panel ───
+        const stdoutPanel = document.getElementById('panel-stdout');
+        if (result.stdout && result.stdout.trim()) {
+          stdoutPanel.innerHTML = `<pre class="output-text stdout">${escHtml(result.stdout)}</pre>`;
+        } else {
+          stdoutPanel.innerHTML = '<div class="output-empty">No output.</div>';
+        }
+
+        // ─── Stderr Panel ───
+        const stderrPanel = document.getElementById('panel-stderr');
+        // Filter out pure permission denial errors from general errors tab
+        const stderrLines = (result.stderr || '').split('\n')
+          .filter(l => !l.includes('PermissionDenied') && !l.includes('NotCapable') || l.trim() === '')
+          .join('\n').trim();
+
+        const hasErrors = stderrLines.length > 0 && result.stderr && result.stderr.trim() &&
+          (result.exitCode !== 0);
+
+        if (hasErrors) {
+          stderrPanel.innerHTML = `<pre class="output-text stderr">${escHtml(result.stderr)}</pre>`;
+          document.getElementById('badge-errors').classList.add('visible');
+        } else {
+          stderrPanel.innerHTML = '<div class="output-empty">No errors.</div>';
+        }
+
+        // ─── Security Panel ───
+        const secPanel = document.getElementById('panel-security');
+        const violations = result.permissionViolations || [];
+
+        if (violations.length > 0) {
+          document.getElementById('badge-security').classList.add('visible');
+          const items = violations.map(v => {
+            const permKey = extractPermFromViolation(v);
+            const hint = permKey ? permissionHints[permKey] : null;
+            return `
+              <div class="violation-item">
+                <div class="violation-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  ${escHtml(v)}
+                </div>
+                ${hint ? `<div class="violation-hint">Enable the <strong>${hint.label}</strong> toggle to allow this action (<code>${hint.flag}</code>)</div>` : ''}
+              </div>`;
+          }).join('');
+          secPanel.innerHTML = items;
+        } else {
+          secPanel.innerHTML = `<div class="security-ok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>No permission violations detected.</div>`;
+        }
+
+        // ─── Footer ───
+        statusEl.textContent = result.exitCode === 0 ? 'Completed' : `Exited with code ${result.exitCode}`;
+        if (result.executionTimeMs != null) {
+          timeEl.textContent = `${result.executionTimeMs}ms`;
+          timeEl.style.display = 'inline';
+        }
+
+        // Auto-switch to security tab if violations
+        if (violations.length > 0 && !result.stdout) {
+          document.querySelector('[data-tab="security"]').click();
+        }
+
+      } catch (err) {
+        document.getElementById('panel-stdout').innerHTML = `<div class="output-empty" style="color:var(--red)">Request failed: ${escHtml(String(err))}</div>`;
+        statusEl.textContent = 'Error';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Run`;
+      }
+    }
+
+    function escHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
+</body>
+</html>
