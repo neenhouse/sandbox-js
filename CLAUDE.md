@@ -14,3 +14,5 @@ Secure code playground — run arbitrary TypeScript/JavaScript in isolated Deno 
 
 - `deno task dev` — Start dev server with watch mode (port 8000)
 - `deno task start` — Start production server
+- `deno task build` — Type-check and cache dependencies
+- `deno task test` — Run test suite
