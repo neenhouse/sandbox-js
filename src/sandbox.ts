@@ -54,7 +54,8 @@ export async function executeInSandbox(
   if (code.length > MAX_CODE_SIZE) {
     return {
       stdout: "",
-      stderr: `Error: Code size exceeds maximum allowed size of ${MAX_CODE_SIZE} bytes`,
+      stderr:
+        `Error: Code size exceeds maximum allowed size of ${MAX_CODE_SIZE} bytes`,
       exitCode: 1,
       executionTimeMs: 0,
       permissionViolations: [],
@@ -121,7 +122,9 @@ export async function executeInSandbox(
 
     return {
       stdout: "",
-      stderr: `Execution error: ${error instanceof Error ? error.message : String(error)}`,
+      stderr: `Execution error: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
       exitCode: 1,
       executionTimeMs,
       permissionViolations: [],

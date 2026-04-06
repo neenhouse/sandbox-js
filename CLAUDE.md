@@ -1,6 +1,7 @@
 # SandboxJS
 
-Secure code playground — run arbitrary TypeScript/JavaScript in isolated Deno sandboxes with per-execution permission controls.
+Secure code playground — run arbitrary TypeScript/JavaScript in isolated Deno
+sandboxes with per-execution permission controls.
 
 ## Tech Stack
 

@@ -70,13 +70,16 @@ async function handler(req: Request): Promise<Response> {
         );
       }
 
-      const result = await executeInSandbox(code, permissions ?? {
-        net: false,
-        read: false,
-        write: false,
-        env: false,
-        run: false,
-      });
+      const result = await executeInSandbox(
+        code,
+        permissions ?? {
+          net: false,
+          read: false,
+          write: false,
+          env: false,
+          run: false,
+        },
+      );
 
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -84,7 +87,9 @@ async function handler(req: Request): Promise<Response> {
     } catch (error) {
       return new Response(
         JSON.stringify({
-          error: `Request error: ${error instanceof Error ? error.message : String(error)}`,
+          error: `Request error: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
         }),
         {
           status: 400,
