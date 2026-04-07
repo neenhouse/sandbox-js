@@ -1,7 +1,4 @@
-import {
-  assertEquals,
-  assertStringIncludes,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { executeInSandbox, type Permissions } from "./sandbox.ts";
 
 const NO_PERMS: Permissions = {
@@ -52,6 +49,3 @@ Deno.test("allows net access when permission is granted", async () => {
   assertStringIncludes(result.stdout, "200");
   assertEquals(result.permissionViolations.length, 0);
 });
-
-// Import assert for the permission violation test
-import { assert } from "https://deno.land/std@0.224.0/assert/mod.ts";
