@@ -1,6 +1,6 @@
 import { executeInSandbox, type Permissions } from "./sandbox.ts";
 
-const PORT = 8000;
+const PORT = parseInt(Deno.env.get("PORT") ?? "8000", 10);
 
 async function serveStaticFile(path: string): Promise<Response> {
   try {
